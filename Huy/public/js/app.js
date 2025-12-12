@@ -175,11 +175,8 @@ document.getElementById('registerFormElement').addEventListener('submit', async 
       body: JSON.stringify({ name, email, password })
     });
 
-    setToken(data.token);
-    currentUser = data.user;
-    
-    showNotification(data.message);
-    showApp();
+    showNotification("Đăng ký thành công! Hãy đăng nhập.");
+    showLogin();
     
   } catch (error) {
     showNotification(error.message, 'error');
@@ -753,4 +750,3 @@ async function exportExcel() {
     hideLoading();
   }
 }
-
