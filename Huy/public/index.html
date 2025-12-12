@@ -1,1 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản Lý Chi Tiêu - Nâng Cao</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- Auth Container (Login/Register) -->
+  <div id="authContainer" class="auth-container">
+    <div class="auth-box">
+      <!-- Login Form -->
+      <div id="loginForm" class="auth-form active">
+        <h2>🔐 Đăng Nhập</h2>
+        <form id="loginFormElement">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="loginEmail" required placeholder="example@email.com">
+          </div>
+          <div class="form-group">
+            <label>Mật khẩu</label>
+            <input type="password" id="loginPassword" required placeholder="Nhập mật khẩu">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Đăng Nhập</button>
+          <p class="auth-switch">
+            Chưa có tài khoản? <a href="#" onclick="showRegister(event)">Đăng ký ngay</a>
+          </p>
+        </form>
+      </div>
 
+      <!-- Register Form -->
+      <div id="registerForm" class="auth-form">
+        <h2>📝 Đăng Ký</h2>
+        <form id="registerFormElement">
+          <div class="form-group">
+            <label>Họ tên</label>
+            <input type="text" id="registerName" required placeholder="Nguyễn Văn A">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="registerEmail" required placeholder="example@email.com">
+          </div>
+          <div class="form-group">
+            <label>Mật khẩu</label>
+            <input type="password" id="registerPassword" required placeholder="Tối thiểu 6 ký tự">
+          </div>
+          <div class="form-group">
+            <label>Xác nhận mật khẩu</label>
+            <input type="password" id="registerConfirmPassword" required placeholder="Nhập lại mật khẩu">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Đăng Ký</button>
+          <p class="auth-switch">
+            Đã có tài khoản? <a href="#" onclick="showLogin(event)">Đăng nhập</a>
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App Container -->
+  <div id="appContainer" class="container" style="display: none;">
+    <!-- Header với User Info -->
+    <header class="header">
+      <div class="header-content">
+        <div>
+          <h1>💰 Quản Lý Chi Tiêu</h1>
+          <p class="subtitle">Theo dõi thu chi của bạn một cách dễ dàng</p>
+        </div>
+        <div class="user-menu">
+          <div class="user-info">
+            <span id="userName">User</span>
+            <button class="btn btn-secondary btn-sm" onclick="logout()">Đăng xuất</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Filter & Search Bar -->
+    <section class="filter-bar">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 Tìm kiếm giao dịch...">
+      </div>
+      <div class="filter-controls">
+        <select id="filterType" class="filter-select">
+          <option value="all">Tất cả</option>
+          <option value="thu">Thu nhập</option>
+          <option value="chi">Chi tiêu</option>
+        </select>
+        <select id="filterCategory" class="filter-select">
+          <option value="all">Tất cả danh mục</option>
+        </select>
+        <input type="date" id="filterStartDate" class="filter-date">
+        <input type="date" id="filterEndDate" class="filter-date">
+        <button class="btn btn-primary" onclick="applyFilters()">Lọc</button>
+        <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+      </div>
+    </section>
+
+    <!-- Thống kê -->
+    <section class="statistics">
+      <div class="stat-card income-card">
+        <div class="stat-icon">📈</div>
+        <div class="stat-info">
+          <h3>Thu Nhập</h3>
+          <p class="stat-amount" id="totalIncome">0 đ</p>
+        </div>
+      </div>
+
+      <div class="stat-card expense-card">
+        <div class="stat-icon">📉</div>
+        <div class="stat-info">
+          <h3>Chi Tiêu</h3>
+          <p class="stat-amount" id="totalExpense">0 đ</p>
+        </div>
+      </div>
+
+      <div class="stat-card balance-card">
+        <div class="stat-icon">💵</div>
+        <div class="stat-info">
+          <h3>Số Dư</h3>
+          <p class="stat-amount" id="balance">0 đ</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts -->
+    <section class="charts-section">
+      <div class="chart-container">
+        <h3>📊 Biểu Đồ Thu Chi Theo Tháng</h3>
+        <canvas id="monthlyChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <h3>🥧 Biểu Đồ Chi Tiêu Theo Danh Mục</h3>
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </section>
+
+    <!-- Export Buttons -->
+    <section class="export-section">
+      <h3>📥 Xuất Báo Cáo</h3>
+      <div class="export-buttons">
+        <button class="btn btn-success" onclick="exportPDF()">
+          📄 Xuất PDF
+        </button>
+        <button class="btn btn-success" onclick="exportExcel()">
+          📊 Xuất Excel
+        </button>
+      </div>
+    </section>
+
+    <!-- Form thêm giao dịch -->
+    <section class="form-section">
+      <h2>
+        <span id="formTitle">Thêm Giao Dịch Mới</span>
+      </h2>
+      
+      <form id="transactionForm">
+        <input type="hidden" id="editId" value="">
+        
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="type">Loại giao dịch *</label>
+            <select id="type" required>
+              <option value="chi">Chi tiêu</option>
+              <option value="thu">Thu nhập</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="category">Danh mục *</label>
+            <select id="category" required>
+              <optgroup label="Chi tiêu">
+                <option value="Ăn uống">🍜 Ăn uống</option>
+                <option value="Di chuyển">🚗 Di chuyển</option>
+                <option value="Mua sắm">🛒 Mua sắm</option>
+                <option value="Giải trí">🎮 Giải trí</option>
+                <option value="Học tập">📚 Học tập</option>
+                <option value="Sức khỏe">💊 Sức khỏe</option>
+                <option value="Nhà cửa">🏠 Nhà cửa</option>
+              </optgroup>
+              <optgroup label="Thu nhập">
+                <option value="Lương">💼 Lương</option>
+                <option value="Thưởng">🎁 Thưởng</option>
+                <option value="Đầu tư">📊 Đầu tư</option>
+                <option value="Kinh doanh">💰 Kinh doanh</option>
+              </optgroup>
+              <option value="Khác">📌 Khác</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="amount">Số tiền (VNĐ) *</label>
+            <input type="number" id="amount" required min="0" step="1000" placeholder="Nhập số tiền">
+          </div>
+
+          <div class="form-group">
+            <label for="date">Ngày *</label>
+            <input type="date" id="date" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Mô tả *</label>
+          <input type="text" id="description" required placeholder="Nhập mô tả giao dịch...">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="submitBtn">
+            ➕ Thêm Giao Dịch
+          </button>
+          <button type="button" class="btn btn-secondary" id="cancelBtn" style="display: none;" onclick="resetForm()">
+            ❌ Hủy
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Danh sách giao dịch -->
+    <section class="transactions-section">
+      <div class="section-header">
+        <h2>Lịch Sử Giao Dịch</h2>
+        <div class="sort-group">
+          <select id="sortBy" class="filter-select" onchange="applySorting()">
+            <option value="-date">Mới nhất</option>
+            <option value="date">Cũ nhất</option>
+            <option value="-amount">Số tiền cao → thấp</option>
+            <option value="amount">Số tiền thấp → cao</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="transactionList" class="transaction-list">
+        <!-- Transactions will be loaded here -->
+      </div>
+
+      <!-- Pagination -->
+      <div id="pagination" class="pagination"></div>
+
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <div class="empty-icon">📊</div>
+        <h3>Chưa có giao dịch nào</h3>
+        <p>Hãy thêm giao dịch đầu tiên của bạn!</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- Loading overlay -->
+  <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="spinner"></div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
