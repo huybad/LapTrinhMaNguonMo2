@@ -1,1 +1,96 @@
+// server.js - Server chính (Nâng cao)
+const express = require('express');
+const dotenv = require('dotenv');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const path = require('path');
+const connectDatabase = require('./config/database');
+const apiUserRouter = require('./routes/apiUser');
+const authRoutes = require('./routes/auth');
 
+
+
+// Load env vars
+dotenv.config();
+
+// Connect to database
+connectDatabase();
+
+// Initialize app
+const app = express();
+
+// Body parser middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Cookie parser
+app.use(cookieParser());
+
+// Enable CORS
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true
+}));
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Mount routes
+
+app.use('/api/auth', authRoutes);
+app.use('/api/users', apiUserRouter);
+app.use('/api/transactions', require('./routes/transactions'));
+app.use('/api/export', require('./routes/export'));
+
+// Serve static AFTER routes
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve frontend
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route không tồn tại'
+  });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  
+  res.status(err.statusCode || 500).json({
+    success: false,
+    message: err.message || 'Lỗi server',
+    error: process.env.NODE_ENV === 'development' ? err : {}
+  });
+});
+
+// Start server
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, () => {
+  console.log(`
+  ╔═══════════════════════════════════════╗
+  ║  🚀 Server đang chạy ở chế độ ${process.env.NODE_ENV}  ║
+  ║  📡 Port: ${PORT}                        ║
+  ║  🌐 URL: http://localhost:${PORT}       ║
+  ╚═══════════════════════════════════════╝
+  `);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err) => {
+  console.log(`❌ Error: ${err.message}`);
+  server.close(() => process.exit(1));
+});
+
+// Handle SIGTERM
+process.on('SIGTERM', () => {
+  console.log('👋 SIGTERM received. Shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Process terminated');
+  });
+});
